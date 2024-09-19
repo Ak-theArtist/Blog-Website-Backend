@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
@@ -10,8 +11,7 @@ const UserModel = require('./models/Users')
 const Posts = require('./models/Posts')
 const PostModel = require('./models/Posts')
 const PORT = process.env.PORT || 3002
-
-
+const jwtSecretKey = process.env.JWT_SECRET;
 
 
 const app = express()
@@ -25,9 +25,8 @@ app.use(cookieParser())
 app.use(express.static('public'))
 
 
-
 // mongoose.connect('mongodb://127.0.0.1:27017/blog')
-mongoose.connect('mongodb+srv://Ak-theArtist:ak2812040@blog-website.wkn8t.mongodb.net/?retryWrites=true&w=majority&appName=Blog-Website')
+mongoose.connect(process.env.MONGO_URI)
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -47,15 +46,15 @@ const verifyUser = (req, res, next) => {
     if (!token) {
         return res.json('The token is missing')
     } else {
-        jwt.verify(token, 'jwt-secret-key', (err, decoded) => {
+        jwt.verify(token, jwtSecretKey, (err, decoded) => {
             if (err) {
-                return res.json('The token is wrong')
+                return res.json('The token is wrong');
             } else {
                 req.email = decoded.email;
                 req.name = decoded.name;
-                next()
+                next();
             }
-        })
+        });
     }
 }
 
@@ -83,7 +82,7 @@ app.post('/login', (req, res) => {
             if (user) {
                 bcrypt.compare(password, user.password, (err, response) => {
                     if (response) {
-                        const token = jwt.sign({ email: user.email, name: user.name, role: user.role, }, "jwt-secret-key", { expiresIn: "1d" });
+                        const token = jwt.sign({ email: user.email, name: user.name, role: user.role, }, process.env.JWT_SECRET, { expiresIn: "1d" });
                         res.cookie('token', token)
                         return res.json(token);
                     } else {
