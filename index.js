@@ -9,6 +9,7 @@ const path = require('path')
 const UserModel = require('./models/Users')
 const Posts = require('./models/Posts')
 const PostModel = require('./models/Posts')
+const PORT = process.env.PORT || 3002
 
 
 
@@ -199,7 +200,7 @@ app.get('/logout', (req, res) => {
     return res.json('Success')
 })
 
-app.listen('3002', () => {
-    console.log("Server is running on port 3002")
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
     console.log("Mongodb is Connected")
 })
