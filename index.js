@@ -24,7 +24,7 @@ app.use(cors({
 
 app.options('*', cors());
 
-app.use(express.static('public'));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected successfully"))
@@ -135,9 +135,15 @@ app.put('/editpost/:id', upload.single('file'), (req, res) => {
     }
 
     PostModel.findByIdAndUpdate(id, updateData, { new: true })
-        .then(result => res.json('Success'))
-        .catch(err => res.json(err));
+        .then(result => {
+            if (!result) {
+                return res.status(404).json({ message: 'Post not found' });
+            }
+            res.json('Success');
+        })
+        .catch(err => res.status(500).json({ error: err.message }));
 });
+
 
 app.get('/myposts', verifyUser, (req, res) => {
     const userEmail = req.email;
@@ -162,7 +168,7 @@ app.delete('/deletepost/:id', (req, res) => {
 app.get('/getAllposts', (req, res) => {
     Posts.find()
         .then(posts => res.json(posts))
-        .catch(err => res.json(err));
+        .catch(err => res.status(500).json({ error: err.message }));
 });
 
 app.get('/getAllusers', (req, res) => {
