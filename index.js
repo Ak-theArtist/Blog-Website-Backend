@@ -1,53 +1,47 @@
 require('dotenv').config();
-const express = require('express')
-const mongoose = require('mongoose')
-const cors = require('cors')
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
-const cookieParser = require('cookie-parser')
-const multer = require('multer')
-const path = require('path')
-const UserModel = require('./models/Users')
-const Posts = require('./models/Posts')
-const PostModel = require('./models/Posts')
-const PORT = process.env.PORT || 3002
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const UserModel = require('./models/Users');
+const Posts = require('./models/Posts');
+const PostModel = require('./models/Posts');
+const PORT = process.env.PORT || 3002;
 const jwtSecretKey = process.env.JWT_SECRET;
 
-
-const app = express()
-app.use(express.json())
+const app = express();
+app.use(express.json());
 app.use(cors({
     origin: 'https://blog-website-frontend-paa1.onrender.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
-app.use(cookieParser())
-app.use(express.static('public'))
+app.use(express.static('public'));
 
-
-// mongoose.connect('mongodb://127.0.0.1:27017/blog')
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB connected successfully"))
-.catch(err => console.error("MongoDB connection error:", err));
-
+    .then(() => console.log("MongoDB connected successfully"))
+    .catch(err => console.error("MongoDB connection error:", err));
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'Public/Images')
+        cb(null, 'Public/Images');
     },
     filename: (req, file, cb) => {
-        cb(null, 'file.fieldname' + "_" + Date.now() + path.extname(file.originalname))
+        cb(null, 'file.fieldname' + "_" + Date.now() + path.extname(file.originalname));
     }
-})
+});
 
 const upload = multer({
     storage: storage
-})
+});
 
 const verifyUser = (req, res, next) => {
-    const token = req.cookies.token;
+    const token = req.headers['authorization']?.split(' ')[1];
     if (!token) {
-        return res.json('The token is missing')
+        return res.json('The token is missing');
     } else {
         jwt.verify(token, jwtSecretKey, (err, decoded) => {
             if (err) {
@@ -59,13 +53,11 @@ const verifyUser = (req, res, next) => {
             }
         });
     }
-}
-
+};
 
 app.get('/', verifyUser, (req, res) => {
-    return res.json({ email: req.email, name: req.name })
-})
-
+    return res.json({ email: req.email, name: req.name });
+});
 
 app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
@@ -73,31 +65,27 @@ app.post('/register', (req, res) => {
         .then(hash => {
             UserModel.create({ name, email, password: hash })
                 .then(user => res.json(user))
-                .catch(err => res.json(err))
-        }).catch(err => console.log(err.message))
-})
-
+                .catch(err => res.json(err));
+        }).catch(err => console.log(err.message));
+});
 
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
-    UserModel.findOne({ email: email })
+    UserModel.findOne({ email })
         .then(user => {
             if (user) {
                 bcrypt.compare(password, user.password, (err, response) => {
                     if (response) {
-                        const token = jwt.sign({ email: user.email, name: user.name, role: user.role, }, process.env.JWT_SECRET, { expiresIn: "1d" });
-                        res.cookie('token', token, {
-                            httpOnly: true
-                        });
-                        return res.json(token);
+                        const token = jwt.sign({ email: user.email, name: user.name, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
+                        return res.json({ token });
                     } else {
-                        return res.json('Password is incorrect')
+                        return res.json('Password is incorrect');
                     }
-                })
+                });
             } else {
-                res.json('User not exist')
+                res.json('User not exist');
             }
-        })
+        });
 });
 
 app.post('/create', verifyUser, upload.single('file'), (req, res) => {
@@ -106,8 +94,8 @@ app.post('/create', verifyUser, upload.single('file'), (req, res) => {
     const userName = req.name;
 
     Posts.create({
-        title: title,
-        description: description,
+        title,
+        description,
         file: req.file.filename,
         email: userEmail,
         name: userName
@@ -116,21 +104,19 @@ app.post('/create', verifyUser, upload.single('file'), (req, res) => {
         .catch(err => res.json(err));
 });
 
-
 app.get('/getposts', (req, res) => {
     Posts.find()
-      .sort({ createdAt: -1 })
-      .then(posts => res.json(posts))
-      .catch(err => res.status(400).json('Error: ' + err));
-  });
+        .sort({ createdAt: -1 })
+        .then(posts => res.json(posts))
+        .catch(err => res.status(400).json('Error: ' + err));
+});
 
 app.get('/getpostbyid/:id', (req, res) => {
-    const id = req.params.id
+    const id = req.params.id;
     Posts.findById({ _id: id })
         .then(post => res.json(post))
-        .catch(err => console.log(err))
-})
-
+        .catch(err => console.log(err));
+});
 
 app.put('/editpost/:id', upload.single('file'), (req, res) => {
     const id = req.params.id;
@@ -164,20 +150,21 @@ app.get('/myposts', verifyUser, (req, res) => {
 app.delete('/deletepost/:id', (req, res) => {
     Posts.findByIdAndDelete({ _id: req.params.id })
         .then(result => res.json('Success'))
-        .catch(err => res.json(err))
-})
+        .catch(err => res.json(err));
+});
 
 // API For Admin 
 app.get('/getAllposts', (req, res) => {
     Posts.find()
         .then(posts => res.json(posts))
-        .catch(err => res.json(err))
-})
+        .catch(err => res.json(err));
+});
+
 app.get('/getAllusers', (req, res) => {
     UserModel.find()
         .then(posts => res.json(posts))
-        .catch(err => res.json(err))
-})
+        .catch(err => res.json(err));
+});
 
 app.delete('/deleteUser/:id', async (req, res) => {
     const userId = req.params.id;
@@ -198,13 +185,11 @@ app.delete('/deleteUser/:id', async (req, res) => {
     }
 });
 
-
 app.get('/logout', (req, res) => {
-    res.clearCookie('token');
-    return res.json('Success')
-})
+    return res.json('Success');
+});
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
-    console.log("Mongodb is Connected")
-})
+    console.log(`Server is running on port ${PORT}`);
+    console.log("MongoDB is Connected");
+});
