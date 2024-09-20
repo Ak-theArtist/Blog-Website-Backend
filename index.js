@@ -16,15 +16,10 @@ const app = express();
 app.use(express.json());
 app.use(cors({
     origin: 'https://blog-website-frontend-paa1.onrender.com',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
-    allowedHeaders: ['Content-Type', 'Authorization'], 
-    exposedHeaders: ['Authorization'], 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
 }));
-
-app.use(cors({ origin: '*', credentials: true }));
-
-
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected successfully"))
@@ -135,15 +130,9 @@ app.put('/editpost/:id', upload.single('file'), (req, res) => {
     }
 
     PostModel.findByIdAndUpdate(id, updateData, { new: true })
-        .then(result => {
-            if (!result) {
-                return res.status(404).json({ message: 'Post not found' });
-            }
-            res.json('Success');
-        })
-        .catch(err => res.status(500).json({ error: err.message }));
+        .then(result => res.json('Success'))
+        .catch(err => res.json(err));
 });
-
 
 app.get('/myposts', verifyUser, (req, res) => {
     const userEmail = req.email;
@@ -168,7 +157,7 @@ app.delete('/deletepost/:id', (req, res) => {
 app.get('/getAllposts', (req, res) => {
     Posts.find()
         .then(posts => res.json(posts))
-        .catch(err => res.status(500).json({ error: err.message }));
+        .catch(err => res.json(err));
 });
 
 app.get('/getAllusers', (req, res) => {
