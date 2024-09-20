@@ -17,7 +17,7 @@ const jwtSecretKey = process.env.JWT_SECRET;
 const app = express()
 app.use(express.json())
 app.use(cors({
-    origin: [process.env.CLIENT_URL],
+    origin: 'https://blog-website-frontend-paa1.onrender.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
 }));
