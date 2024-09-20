@@ -16,9 +16,14 @@ const app = express();
 app.use(express.json());
 app.use(cors({
     origin: 'https://blog-website-frontend-paa1.onrender.com',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+    credentials: true, 
+    allowedHeaders: ['Content-Type', 'Authorization'], 
+    exposedHeaders: ['Authorization'], 
 }));
+
+app.options('*', cors());
+
 app.use(express.static('public'));
 
 mongoose.connect(process.env.MONGO_URI)
