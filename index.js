@@ -89,6 +89,11 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/create', verifyUser, upload.single('file'), (req, res) => {
+    console.log("Request Body:", req.body);
+    console.log("File:", req.file);
+    console.log("User Email:", req.email);
+    console.log("User Name:", req.name);
+
     const { title, description } = req.body;
     const userEmail = req.email;
     const userName = req.name;
@@ -103,6 +108,7 @@ app.post('/create', verifyUser, upload.single('file'), (req, res) => {
         .then(result => res.json('Success'))
         .catch(err => res.json(err));
 });
+
 
 app.get('/getposts', (req, res) => {
     Posts.find()
