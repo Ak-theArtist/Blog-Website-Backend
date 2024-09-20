@@ -17,9 +17,12 @@ app.use(express.json());
 app.use(cors({
     origin: 'https://blog-website-frontend-paa1.onrender.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.static('public'));
+app.options('*', cors());
+
+app.use('/Images', express.static('Public/Images'));
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected successfully"))
