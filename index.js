@@ -86,7 +86,9 @@ app.post('/login', (req, res) => {
                 bcrypt.compare(password, user.password, (err, response) => {
                     if (response) {
                         const token = jwt.sign({ email: user.email, name: user.name, role: user.role, }, process.env.JWT_SECRET, { expiresIn: "1d" });
-                        res.cookie('token', token)
+                        res.cookie('token', token, {
+                            httpOnly: true
+                        });
                         return res.json(token);
                     } else {
                         return res.json('Password is incorrect')
